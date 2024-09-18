@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -95,32 +94,22 @@ func TestSetAddress(t *testing.T) {
 // TestSetStatus проверяет обновление статуса
 func TestSetStatus(t *testing.T) {
 	// prepare
-	db, err := ConnectDb()
-	if err != nil {
-		require.NoError(t, err)
-	}
-	defer db.Close()
+	db, err := sql.Open("sqlite", "tracker.db")
+
+	require.NoError(t, err)
+
+	defer db.Close() // настройте подключение к БД
 
 	store := NewParcelStore(db)
 	parcel := getTestParcel()
-
-	// add
-	// добавьте новую посылку в БД, убедитесь в отсутствии ошибки и наличии идентификатора
 	parcel.Number, err = store.Add(parcel)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, parcel.Number)
-	// set status
-	// обновите статус, убедитесь в отсутствии ошибки
-	err = store.SetStatus(parcel.Number, ParcelStatusDelivered)
+	err = store.SetStatus(parcel.Number, ParcelStatusSent)
 	require.NoError(t, err)
-
-	// check
-	// получите добавленную посылку и убедитесь, что статус обновился
-	stored, err := store.Get(parcel.Number)
-
-	require.NoError(t, err)
-	assert.Equal(t, ParcelStatusDelivered, stored.Status)
+	stored, _ := store.Get(parcel.Number)
+	require.Equal(t, ParcelStatusSent, stored.Status)
 }
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
